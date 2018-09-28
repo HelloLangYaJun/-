@@ -4,10 +4,10 @@ const path = require('path')
 
 const login = require('./users')
 const articles = require('./articles')
-// router.get('/', (req, res) => {
-//     res.sendFile(path.resolve(__dirname, '../views/index.html'));
-// })
+const messages = require('./messages')
+
 router.use(login);
 router.use(articles);
+router.use(messages)
 
 module.exports = router;

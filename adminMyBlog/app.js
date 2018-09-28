@@ -15,7 +15,7 @@ app.use(session({
     secret: 'Langyajun',
     resave: false, //是否重新保存session
     saveUninitialized: false,  //保存初始化
-    cookie: {maxAge: 1000 * 60 * 30}, // 6分钟
+    cookie: {maxAge: 1000 * 60 * 130}, // 6分钟
     store: new MongoStore({
         url: 'mongodb://localhost/' + config.db,
         collection: 'sessions'

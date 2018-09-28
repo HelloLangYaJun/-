@@ -22,7 +22,7 @@
     </div>
     <div class="article">
       <div class="article-item" v-for="item in article">
-        <div class="item-top"><span class="author">{{item.author}}</span><span>·{{item.updatedAt}}</span>
+        <div class="item-top"><span class="author">{{item.author}}</span><span>·{{item.time}}</span>
           <el-tag size="small" v-if="item.tags[0]">Html</el-tag>
           <el-tag type="success" size="small" v-if="item.tags[1]">Css</el-tag>
           <el-tag type="info" size="small" v-if="item.tags[2]">Javascript</el-tag>
@@ -151,7 +151,6 @@
               this.$message.success('登陆成功')
               this.getArticles()
               this.loginInfo = res.data
-              // localStorage.setItem('logininfo',JSON.stringify(res.data))
             }
             else {
               this.$message.error('登录失败');
@@ -176,13 +175,13 @@
         //   this.loginInfo.flag=true
         //   console.log(this.loginInfo)
         // }
-        this.$axios.get('/').then(res => {
+        this.$axios.get('/').then(res =>{
           if (res.code == 200) {
             this.loginInfo = res.data
             Vue.prototype.$loginInfo = res.data
           }
           else {
-
+            Vue.prototype.$loginInfo = {}
           }
         })
       },
@@ -191,7 +190,7 @@
         this.$axios.delete('/logOut').then(res => {
           if (res.code == 200) {
             this.loginInfo = {}
-            this.article = []
+            // this.article = []
             Vue.prototype.$loginInfo = {}
             console.log(this.$loginInfo)
             this.$message.success('退出登陆成功')
@@ -200,12 +199,14 @@
             this.$message.error('退出登陆失败')
           }
         })
-
       },
-      getArticles() {
+      getArticles(){
         this.$axios.get('/articles').then(res => {
           if (res.code == 200) {
             this.article = res.data
+            this.article.forEach(i=>{
+              i.time=this.$axios.transformtime(i.createdAt)
+            })
           }
           else {
             this.$message.warning('未登录，无法查看笔记')
@@ -213,7 +214,6 @@
         })
       }
     },
-
     computed: {},
     created() {
       this.getloginInfo()
@@ -223,7 +223,6 @@
         console.log(this.ToKen)
       })
     }
-
   }
 </script>
 
@@ -289,7 +288,7 @@
         justify-content: space-around;
         img {
           width: 100px;
-          height: 100px;
+          min-height: 100px;
           margin: 0 auto;
         }
       }
