@@ -13,7 +13,19 @@
           <el-button @click="registe">注册</el-button>
         </form>
         <div class="Info" v-if="loginInfo.username">
-          <img :src="loginInfo.avatar" alt="" @click="dialogVisible = true">
+
+          <el-dropdown>
+            <span class="el-dropdown-link">
+               <img :src="loginInfo.avatar" alt="">
+           </span>
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item ><p @click="openupdateimg">更换头像</p></el-dropdown-item>
+              <el-dropdown-item><p @click="myHomepage(loginInfo)">我的主页</p></el-dropdown-item>
+              <el-dropdown-item>我的收藏</el-dropdown-item>
+              <el-dropdown-item>修改密码</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
+
           <p>{{loginInfo.username}}</p>
           <p>{{loginInfo.email}}</p>
           <el-button type="warning" @click="logout">退出登陆</el-button>
@@ -21,20 +33,20 @@
       </div>
     </div>
     <div class="article">
-      <div class="article-item" v-for="item in article">
-        <div class="item-top"><span class="author">{{item.author}}</span><span>·{{item.time}}</span>
-          <el-tag size="small" v-if="item.tags[0]">Html</el-tag>
-          <el-tag type="success" size="small" v-if="item.tags[1]">Css</el-tag>
-          <el-tag type="info" size="small" v-if="item.tags[2]">Javascript</el-tag>
-          <el-tag type="warning" size="small" v-if="item.tags[3]">Node.js</el-tag>
-          <el-tag type="danger" size="small" v-if="item.tags[4]">小程序</el-tag>
-          <el-tag size="small" v-if="item.tags[5]">其他</el-tag>
-        </div>
-        <div class="item-title"><h2 @click="openread(item)">{{item.title}}</h2></div>
-        <div class="item-look"><img src="../assets/read.svg" alt="">
-          <p>{{item.looknums}}阅读</p></div>
+    <div class="article-item" v-for="item in article">
+      <div class="item-top"><span class="author">{{item.author}}</span><span>·{{item.time}}</span>
+        <el-tag size="small" v-if="item.tags[0]">Html</el-tag>
+        <el-tag type="success" size="small" v-if="item.tags[1]">Css</el-tag>
+        <el-tag type="info" size="small" v-if="item.tags[2]">Javascript</el-tag>
+        <el-tag type="warning" size="small" v-if="item.tags[3]">Node.js</el-tag>
+        <el-tag type="danger" size="small" v-if="item.tags[4]">小程序</el-tag>
+        <el-tag size="small" v-if="item.tags[5]">其他</el-tag>
       </div>
+      <div class="item-title"><h2 @click="openread(item)">{{item.title}}</h2></div>
+      <div class="item-look"><img src="../assets/read.svg" alt="">
+        <p>{{item.looknums}}阅读</p></div>
     </div>
+  </div>
 
     <div class="select">
       <el-autocomplete
@@ -54,17 +66,17 @@
       width="30%"
       :before-close="handleClose">
       <span>修改头像</span>
-     <div class="updateimg">
-       <el-upload
-         class="my-uploader"
-         action="https://upload-z1.qiniup.com"
-         :show-file-list="false"
-         :data="ToKen"
-         :on-success="handleAvatarSuccess">
-         <img v-if="imageUrl" :src="imageUrl" class="avatar">
-         <i v-else class="el-icon-plus avatar-uploader-icon"></i>
-       </el-upload>
-     </div>
+      <div class="updateimg">
+        <el-upload
+          class="my-uploader"
+          action="https://upload-z1.qiniup.com"
+          :show-file-list="false"
+          :data="ToKen"
+          :on-success="handleAvatarSuccess">
+          <img v-if="imageUrl" :src="imageUrl" class="avatar">
+          <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+        </el-upload>
+      </div>
       <span slot="footer" class="dialog-footer">
     <el-button @click="dialogVisible = false">取 消</el-button>
     <el-button type="primary" @click="updateimg">确 定</el-button>
@@ -76,6 +88,7 @@
 <script>
   import Vue from 'vue'
   import axios from 'axios'
+
   export default {
     name: "index",
     data() {
@@ -85,21 +98,28 @@
         loginInfo: {},
         article: [],
         state1: '',
-        ToKen:'',
-        imageUrl:'',
-        newImg:'',
-        dialogVisible:false
+        ToKen: {},
+        imageUrl: '',
+        newImg: '',
+        dialogVisible: false
       }
     },
     methods: {
-      handleClose(){},
+      myHomepage(loginInfo){
+        this.$router.push(`/homePage?id=${loginInfo._id}`)
+      },
+      handleClose() {
+      },
       handleAvatarSuccess(res, file) {
         this.imageUrl = URL.createObjectURL(file.raw);
-        this.newImg=res.url
+        this.newImg = res.url
       },
-      updateimg(){
-        this.$axios.put(`/user`,{avatar:this.newImg}).then(res=>{
-          if(res.code==200){
+      openupdateimg(){
+        this.dialogVisible = true
+      },
+      updateimg() {
+        this.$axios.put(`/user`, {avatar: this.newImg}).then(res => {
+          if (res.code == 200) {
             this.getloginInfo()
             this.$message.success('修改成功')
           }
@@ -107,23 +127,23 @@
             this.$message.warning('修改失败')
           }
         })
-        this.dialogVisible=false
+        this.dialogVisible = false
       },
-      querySearchAsync(queryString, cb){
-        if(queryString){
-          this.$axios.get(`/articles/title/${queryString}`).then(res=>{
-            if(res.code==200){
-              var arr=[]
-              this.article=res.data
-              for(let i=0;i<res.data.length;i++){
-                arr[i]=res.data[i]
-                arr[i].value= arr[i].title
+      querySearchAsync(queryString, cb) {
+        if (queryString) {
+          this.$axios.get(`/articles/title/${queryString}`).then(res => {
+            if (res.code == 200) {
+              var arr = []
+              this.article = res.data
+              for (let i = 0; i < res.data.length; i++) {
+                arr[i] = res.data[i]
+                arr[i].value = arr[i].title
               }
               this.timeout = setTimeout(() => {
                 cb(arr);
               }, 100 * Math.random());
             }
-            else if(res.code==308){
+            else if (res.code == 308) {
               this.$message.warning('未登录，查询为空')
             }
           })
@@ -139,7 +159,7 @@
           return (state.value.toLowerCase().indexOf(queryString.toLowerCase()) === 0);
         };
       },
-      handleSelect(item){
+      handleSelect(item) {
         console.log(item)
       },
       login() {
@@ -149,6 +169,7 @@
           this.$axios.post('/login', {email: this.email, password: this.password}).then(res => {
             if (res.code == 200) {
               this.$message.success('登陆成功')
+              this.getloginInfo()
               this.getArticles()
               this.loginInfo = res.data
             }
@@ -175,7 +196,7 @@
         //   this.loginInfo.flag=true
         //   console.log(this.loginInfo)
         // }
-        this.$axios.get('/').then(res =>{
+        this.$axios.get('/').then(res => {
           if (res.code == 200) {
             this.loginInfo = res.data
             Vue.prototype.$loginInfo = res.data
@@ -200,12 +221,12 @@
           }
         })
       },
-      getArticles(){
+      getArticles() {
         this.$axios.get('/articles').then(res => {
           if (res.code == 200) {
             this.article = res.data
-            this.article.forEach(i=>{
-              i.time=this.$axios.transformtime(i.createdAt)
+            this.article.forEach(i => {
+              i.time = this.$axios.transformtime(i.createdAt)
             })
           }
           else {
@@ -218,8 +239,8 @@
     created() {
       this.getloginInfo()
       this.getArticles()
-      axios.get('http://upload.yaojunrong.com/getToken').then(res=> {
-        this.ToKen = {token:res.data.data}
+      axios.get('http://upload.yaojunrong.com/getToken').then(res => {
+        this.ToKen = {token: res.data.data}
         console.log(this.ToKen)
       })
     }
@@ -230,8 +251,9 @@
   .main-container {
     width: 1150px;
     min-height: 300px;
-    .select{
+    .select {
       position: fixed;
+      margin-left: 47rem;
       top: 10px;
       /*right: 200px;*/
       z-index: 1999;
@@ -311,7 +333,7 @@
       .item-top {
         color: #aaa;
         font-size: 14px;
-        .author{
+        .author {
           color: #f40;
         }
       }
@@ -328,7 +350,8 @@
       }
     }
   }
-  .updateimg{
+
+  .updateimg {
     /*.....................上传样式....................................*/
     .avatar-uploader .el-upload {
       border: 1px dashed #d9d9d9;

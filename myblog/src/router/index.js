@@ -7,6 +7,7 @@ const components= {
   registe: () => import('@/views/registe'),
   write: () => import('@/views/write'),
   read:()=>import('@/views/read'),
+  homePage:()=>import('@/views/myHomepage')
 }
 export default new Router({
   routes: [
@@ -30,6 +31,10 @@ export default new Router({
         {
           path:'read',
           component:components.read
+        },
+        {
+          path:'homePage',
+          component:components.homePage
         },
       ]
 

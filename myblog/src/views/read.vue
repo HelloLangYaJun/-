@@ -1,5 +1,5 @@
 <template>
-    <div class="main" >
+    <div class="main"  id="main">
       <div>
        <div class="backpage">
          <el-button-group>
@@ -16,7 +16,7 @@
           </div >
           <div class="message" v-for="(item,index) in comments">
             <div class="top">
-              <img :src="item.authorMsg.avatar" alt="" class="image">
+              <img :src="item.authorMsg.avatar" alt="" class="image" @click="inHomepage(item)">
               <div class="top-right">
                 <p class="name">{{item.authorMsg.username}}</p>
                 <p >{{item.content}}</p>
@@ -33,7 +33,7 @@
               <div class="bottom"  v-for="(item2,index2) in item.reply ">
                 <!--。。。。。。。。。。。。。。。。。。。。回复信息。。。。。。。。。。。。。。。。。。-->
                 <div class="top">
-                  <img :src="item2.authorMsg.avatar" alt="" class="image">
+                  <img :src="item2.authorMsg.avatar" alt="" class="image"  @click="inHomepage(item2)">
                   <div class="top-right">
                     <p class="name">{{item2.authorMsg.username}} 回复{{item.authorMsg.username}}</p>
                     <p >{{item2.content}}</p>
@@ -49,12 +49,12 @@
         </div>
        </div>
      <div class="setting">
-       <a href="#"><i class="backtop item"></i></a>
-       <a href="#message" class="gotomessage item">
-         <el-badge :value="12":max="99" class="item">
+       <a @click.prevent="custormAnchor('body')"><i class="backtop item"></i></a>
+       <a @click.prevent="custormAnchor('message')" class="gotomessage item">
+         <el-badge :value="commentnum":max="10" class="item">
          <el-button size="small">评论</el-button>
        </el-badge></a>
-       <a href="#"><i class="like item"></i></a>
+       <a @click="collection"><i v-bind:class="{like:isCollection,nolike:!isCollection,item:true}"></i></a>
      </div>
     </div>
 
@@ -73,18 +73,42 @@
           comments:[],
           loginInfo:'',
           articleMsg:'',
+          commentnum:0,
           visibility:false,
           visibility2:false,
+          isCollection:false,
         }
       },
 
       methods:{
+        collection(){
+          this.$axios.put(`/user/articles/${this.$route.query.id}`,{isCollection:this.isCollection}).then(res =>{
+            if (res.code == 200) {
+              this.isCollection=!this.isCollection
+              this.$message.success(res.msg);
+            }
+            else {
+              this.$message.error('操作失败');
+            }
+          })
+        },
+        inHomepage(item){
+          this.$router.push(`/homepage?id=${item.authorMsg._id}`)
+          console.log(item)
+        },
+        custormAnchor(anchorName) {
+          // 找到锚点
+          let anchorElement = document.getElementById(anchorName);
+          // 如果对应id的锚点存在，就跳转到锚点
+          if(anchorElement) { anchorElement.scrollIntoView(); }
+        },
         openreply(index){
           this.comments[index].flag=true
           Vue.set(this.comments,index,this.comments[index])
         },
         backpage(){
-          this.$router.push('/')
+          this.$router.go(-1)
+          // this.$router.push('/')
         },
         focus(){
           this.visibility=true
@@ -129,6 +153,7 @@
         getcomment(){
           this.$axios.get(`/message/${this.$route.query.id}`).then(res =>{
             if (res.code == 200){
+              this.commentnum=res.data.length
               res.data.forEach(i=>{
                 i.time=this.$axios.transformtime(i.createdAt)
                 i.flag=''
@@ -152,7 +177,6 @@
                 })
               })
               this.comments=message
-              console.log(this.comments)
             }
             else {
               this.$message.error('获取评论失败');
@@ -170,6 +194,13 @@
             if (res.code == 200) {
               this.loginInfo = res.data
               this.articleMsg=res.data
+              let queryid=this.$route.query.id
+              this.loginInfo.colarticles.forEach(i=>{
+                if(i==queryid){
+                  this.isCollection=true
+                }
+              })
+              console.log(this.loginInfo)
             }
             else {
               this.$message.error('未找到登陆信息');
@@ -292,8 +323,12 @@
       background: url("../assets/backtop.svg") no-repeat;
       background-size: 30px 30px ;
     }
+    .nolike{
+      background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNyIgaGVpZ2h0PSIxNyIgdmlld0JveD0iMCAwIDE3IDE3Ij4KICAgIDxwYXRoIGZpbGw9IiNCMkJBQzIiIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTkuMzMyIDE0Ljk2OGMtLjQ2LS4yNTUtMS4yMDUtLjI1NS0xLjY2NiAwTDQuMzUgMTYuNzk0Yy0uOTIxLjUwNi0xLjUyMy4wNDQtMS4zNDktMS4wMjdsLjYzNS0zLjg2N2MuMDg4LS41MzctLjE0Mi0xLjI4LS41MTYtMS42NkwuNDM2IDcuNWMtLjc0NS0uNzYtLjUxMS0xLjUwNC41MTYtMS42NmwzLjcwNy0uNTY0Yy41MTQtLjA4IDEuMTE5LS41MzggMS4zNDgtMS4wMjdMNy42NjUuNzMxYy40NjItLjk3NiAxLjIwOC0uOTczIDEuNjY3IDBsMS42NiAzLjUxOWMuMjMuNDg5LjgzMy45NSAxLjM0OSAxLjAyN2wzLjcwOC41NjRjMS4wMjkuMTU2IDEuMjU4LjkwMi41MTUgMS42NmwtMi42ODUgMi43MzljLS4zNzIuMzgtLjYwMyAxLjEyMy0uNTE1IDEuNjZsLjYzNCAzLjg2N2MuMTc2IDEuMDc0LS40MyAxLjUzMy0xLjM0OCAxLjAyN2wtMy4zMTgtMS44MjZ6Ii8+Cjwvc3ZnPgo=);
+      background-size: 28px 28px ;
+    }
     .like{
-      background: url("../assets/like.svg") no-repeat;
+     background: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNyIgaGVpZ2h0PSIxNyIgdmlld0JveD0iMCAwIDE3IDE3Ij4KICAgIDxwYXRoIGZpbGw9IiNGRkMzNDciIGZpbGwtcnVsZT0iZXZlbm9kZCIgZD0iTTkuMzMyIDE0Ljk2OGMtLjQ2LS4yNTUtMS4yMDUtLjI1NS0xLjY2NiAwTDQuMzUgMTYuNzk0Yy0uOTIxLjUwNi0xLjUyMy4wNDQtMS4zNDktMS4wMjdsLjYzNS0zLjg2N2MuMDg4LS41MzctLjE0Mi0xLjI4LS41MTYtMS42NkwuNDM2IDcuNWMtLjc0NS0uNzYtLjUxMS0xLjUwNC41MTYtMS42NmwzLjcwNy0uNTY0Yy41MTQtLjA4IDEuMTE5LS41MzggMS4zNDgtMS4wMjdMNy42NjUuNzMxYy40NjItLjk3NiAxLjIwOC0uOTczIDEuNjY3IDBsMS42NiAzLjUxOWMuMjMuNDg5LjgzMy45NSAxLjM0OSAxLjAyN2wzLjcwOC41NjRjMS4wMjkuMTU2IDEuMjU4LjkwMi41MTUgMS42NmwtMi42ODUgMi43MzljLS4zNzIuMzgtLjYwMyAxLjEyMy0uNTE1IDEuNjZsLjYzNCAzLjg2N2MuMTc2IDEuMDc0LS40MyAxLjUzMy0xLjM0OCAxLjAyN2wtMy4zMTgtMS44MjZ6Ii8+Cjwvc3ZnPgo=);
       background-size: 28px 28px ;
     }
   }

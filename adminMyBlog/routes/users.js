@@ -1,12 +1,14 @@
 const {Router} = require("express");
 const router = Router();
 const user = require('../models/user')
+const message = require('../models/message')
+const articles=require('../models/articles')
 router.get('/', (req, res) => {
         if (req.session.user) {
-            let userMsg =req.session.user
+            // let userMsg =req.session.user
             res.json({
                 code: 200,
-                data: userMsg,
+                data: req.session.user,
                 msg: '存在登陆信息'
             })
         } 
@@ -17,6 +19,40 @@ router.get('/', (req, res) => {
             })
         }
 })
+
+
+//判断是否是本人
+router.get('/user/:id', (req, res) => {
+    if (req.session.user) {
+        let userMsg =req.session.user
+        if(req.params.id==req.session.user._id)
+        {
+            res.json({
+                code: 200,
+                data: userMsg,
+                msg: '本人'
+            })
+        }
+        else{
+            user.findOne({_id:req.params.id},{password:0}).then(data=>{
+                res.json({
+                    code: 200,
+                    data,
+                    msg: '非本人'
+                })
+            })  
+        }
+     
+    } 
+    else{
+        res.json({
+            code: 401,
+            msg: '不存在登陆信息'
+        })
+    }
+})
+
+
 router.post('/login', (req, res) => {
     let {email, password} = req.body;
     user.findOne({email}).then((data) => {
@@ -34,6 +70,7 @@ router.post('/login', (req, res) => {
         }
         else if (data.password == password) {
             req.session.user = data;
+            console.log(req.session.user)
             let userMsg = {
                 username: data.username,
                 email: data.email,
@@ -41,7 +78,7 @@ router.post('/login', (req, res) => {
             };
             res.json({
                 code: 200,
-                data: userMsg,
+                data,
                 msg: '登录成功'
             })
         }
@@ -50,6 +87,8 @@ router.post('/login', (req, res) => {
 })
 
 router.delete('/logOut', (req, res) => {
+    console.log(req.session.user)
+    user.update({_id:req.session.user._id},{})
     req.session.destroy(function (err) {
         if(err){
             console.log(err)
@@ -93,21 +132,87 @@ router.post('/user', (req, res) => {
         })
     }
 })
+
+//收藏或取消收藏笔记
+router.put('/user/articles/:id',(req,res)=>{
+    let {isCollection}=req.body
+   var col=function(){
+    user.update({_id:req.session.user._id},{$push:{colarticles:req.params.id}},function(err,data){
+        user.find({_id:req.session.user._id}).then(data2=>{
+            req.session.user=data2[0]
+        })
+         if(err){console.log(err)}
+         else{
+             articles.update({_id:req.params.id},{$inc:{likenums:1}},function(err,data3){
+                 if(err){console.log(err)}
+                 else{
+                     res.json({
+                         code: 200,
+                         msg: '收藏成功'
+                     })
+                 }
+             })
+            
+         }
+     })
+   }
+   var uncol=function(){
+    user.update({_id:req.session.user._id},{$pull:{colarticles:item}},function(err,data){
+        if(err){console.log(err)}
+        else{
+            console.log('7')
+            user.find({_id:req.session.user._id}).then(data2=>{
+                req.session.user=data2[0]
+                console.log('8')
+            })
+            articles.update({_id:req.params.id},{$inc:{likenums:-1}},function(err,data2){
+                if(err){console.log(err)}
+                else{
+                    console.log('3')
+                  return  res.json({
+                        code: 200,
+                        msg: '取消收藏成功'
+                    })
+                }
+            })
+        }
+    })
+   }
+    if(req.session.user){
+       if(isCollection){
+           uncol()
+       }
+       else{
+           col()
+       }
+    }
+    else{
+        res.json({
+            code: 402,
+            msg: '未登录'
+        })
+    }
+})  
 //修改用户图片
 router.put('/user', (req, res) => {
     let {avatar} = req.body;
-    console.log(avatar)
     if(req.session.user){
         user.update({_id:req.session.user._id},{$set:{avatar:avatar}},function(err,data){
             if(err){
                 console.log(err)
             }
             else{
-                req.session.user = data;
-                res.json({
-                    code: 200,
-                    msg: '修改成功'
-                }) 
+                message.update({"authorMsg._id":req.session.user._id},{$set:{"authorMsg.avatar":avatar}},function(err,data2){
+                    if(err){ console.log(err)}
+                    else{
+                        req.session.user = data;
+                        console.log(data2)
+                        res.json({
+                            code: 200,
+                            msg: '修改成功'
+                        }) 
+                    }
+                })
             }
         })
     }

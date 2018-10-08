@@ -28,19 +28,81 @@ router.post('/articles', (req, res) => {
         })
     }
 })
-//获取文章
-router.get('/articles', (req, res) =>{
-   
+//获取某个人收藏的笔记
+router.post('/articles/collections', (req, res) =>{ 
     let {pn=1,size=10} = req.query;
+    let {colarticals}=req.body
+    // authorMsg:req.session.user._id  加上可只显示自己的信息
+  if(req.session.user){
+      let arr=[]
+      colarticals.forEach((element,index) => {
+          article.findOne({_id:element},function(err,data){
+              if(err){console.log(err)}
+              else{
+                  arr.push(data)
+                  if(index==colarticals.length-1){
+                    res.json({
+                        code: 200,
+                        data:arr
+                      })
+                  }
+              }
+          })
+      });
+      if(!colarticals.length){
+        res.json({
+            code: 200,
+            data:arr
+          }) 
+      }
+  }
+  else{
+    res.json({
+        code: 300,
+        msg:'未登录'
+    }) 
+  }
+})
+
+
+
+//获取文章
+router.get('/articles', (req, res) =>{ 
+    // let {pn=1,size=10} = req.query;
     // authorMsg:req.session.user._id  加上可只显示自己的信息
     article.find({}, function (err, data) {
+      if(err){
+          console.log(err)
+      }
+      else{
         res.json({
-                    code: 200,
-                    data
-                })
+            code: 200,
+            data
+        })
+      }
+    }).sort({'_id':-1})
+    // .sort({'_id':-1})
+    // .skip(size*(pn-1)).limit(size);    
+})
+
+//获取某个人的文章
+router.get('/articles/user/:id', (req, res) =>{ 
+    // let {pn=1,size=10} = req.query;
+    // authorMsg:req.session.user._id  加上可只显示自己的信息
+    article.find({authorMsg:req.params.id}, function (err, data) {
+        if(err){
+            res.json({
+                code: 300,
+                msg:'查询出错'
+            }) 
+        }
+        else{
+            res.json({
+                code: 200,
+                data
+            })
+        }    
     });
-   
-  
 })
 // 搜索框查询（正则查询）
 router.get('/articles/title/:title', (req, res) =>{

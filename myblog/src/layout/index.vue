@@ -1,9 +1,8 @@
 <template>
-  <div class="body">
-
+  <div class="body" id="body">
     <div class="nav">
       <div class="container">
-        <div class="left">
+        <div class="left" @click="backindex">
           <p>云笔记</p>
         </div>
         <div class="right">
@@ -30,6 +29,9 @@
            }
           this.$router.push('/write')
 
+        },
+        backindex(){
+          this.$router.push('/')
         }
       },
       computed:{

@@ -6,9 +6,14 @@ const article = new mongoose.Schema({
         type: String,
         index: 1
     },
+
     content: String,
     // contentText: String,
     looknums: {
+        type: Number,
+        default: 0,
+    },
+    likenums: {
         type: Number,
         default: 0,
     },

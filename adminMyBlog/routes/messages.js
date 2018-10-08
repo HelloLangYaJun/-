@@ -56,7 +56,7 @@ router.post('/message/reply', (req, res) =>{
 
 router.get('/message/:id', (req, res) =>{
         console.log(req.params.id)
-        message.find({toArticle:req.params.id}).then(data => {
+        message.find({toArticle:req.params.id},{"authorMsg.password":0,"toauthor.password":0}).then(data => {
             res.json({
                 code: 200,
                 data,
